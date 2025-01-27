@@ -1,12 +1,32 @@
 <div
+  *ngIf="!username"
+  class="name-form flex flex-col h-screen w-full max-w-md mx-auto justify-center items-center"
+>
+  <h2 class="text-xl font-semibold mb-4">Entrez votre nom</h2>
+  <input
+    [(ngModel)]="usernameInput"
+    type="text"
+    placeholder="Votre nom..."
+    class="border rounded-lg px-4 py-2 mb-4 w-3/4"
+  />
+  <button
+    (click)="submitUsername()"
+    class="px-4 py-2 bg-blue-500 text-white rounded-lg"
+  >
+    Commencer
+  </button>
+</div>
+
+<div
+  *ngIf="username"
   class="chat-container flex flex-col h-screen w-full max-w-md mx-auto border rounded-xl shadow-lg"
 >
   <div class="messages flex-1 overflow-y-auto p-4 space-y-2">
     <div
       *ngFor="let message of messages"
       [ngClass]="{
-        'bg-blue-500 text-white self-end': message.sender === 'user',
-        'bg-gray-200 self-start': message.sender !== 'user'
+        'bg-blue-500 text-white self-end': message.sender === username,
+        'bg-gray-200 self-start': message.sender !== username
       }"
       class="p-2 rounded-lg max-w-xs"
     >
