@@ -40,7 +40,7 @@ spring.datasource.password=your_password
 ## Start the server 
 
 backend: 
-nvm spring-boot:run 
+mvn spring-boot:run 
 
 frontend: 
 ng serve
