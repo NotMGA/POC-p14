@@ -3,6 +3,7 @@ package com.chat.chat.handler;
 import com.chat.chat.model.Message;
 import com.chat.chat.repository.MessageRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -25,6 +26,9 @@ public class ChatHandler extends TextWebSocketHandler {
     // Repository for saving messages to the database
     private final MessageRepository messageRepository;
 
+    // ObjectMapper for JSON serialization/deserialization
+    private final ObjectMapper objectMapper;
+
     /**
      * Constructor for ChatHandler.
      *
@@ -32,6 +36,8 @@ public class ChatHandler extends TextWebSocketHandler {
      */
     public ChatHandler(MessageRepository messageRepository) {
         this.messageRepository = messageRepository;
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.registerModule(new JavaTimeModule()); // Register the JavaTimeModule for LocalDateTime support
     }
 
     /**
@@ -55,28 +61,34 @@ public class ChatHandler extends TextWebSocketHandler {
      */
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        String payload = message.getPayload(); // Get the raw message payload
+        String payload = message.getPayload(); // Get the raw message
         System.out.println("Message received: " + payload);
 
-        // Convert the raw JSON payload to a Message object
-        ObjectMapper objectMapper = new ObjectMapper();
+        // Convert the JSON payload into a Message object
         Message newMessage;
         try {
             newMessage = objectMapper.readValue(payload, Message.class); // Deserialize JSON to Message
         } catch (Exception e) {
-            System.err.println("Error parsing message JSON: " + e.getMessage());
-            return; // Exit the method if JSON parsing fails
+            System.err.println("Error parsing JSON message: " + e.getMessage());
+            return;
         }
 
-        // Set the timestamp for the message
+        // Add a timestamp to the message
         newMessage.setTimestamp(LocalDateTime.now());
 
-        // Save the message to the database
+        // Save the message in the database
         messageRepository.save(newMessage);
 
         // Broadcast the message to all connected clients
         for (WebSocketSession s : sessions) {
-            s.sendMessage(new TextMessage(newMessage.getSender() + ": " + newMessage.getContent()));
+            if (s.isOpen()) { // Ensure the session is still open
+                try {
+                    s.sendMessage(new TextMessage(objectMapper.writeValueAsString(newMessage))); // Serialize and send
+                                                                                                 // the message
+                } catch (Exception e) {
+                    System.err.println("Error broadcasting message: " + e.getMessage());
+                }
+            }
         }
     }
 

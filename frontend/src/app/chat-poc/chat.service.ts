@@ -18,13 +18,21 @@ export class ChatService {
   private username: string = ''; // Property to store the username of the user
 
   constructor(private http: HttpClient) {
-    // Initialize the WebSocket connection
     this.socket = new WebSocket('ws://localhost:8080/chat');
 
-    // Event listener to handle incoming WebSocket messages
+    // Listen for incoming WebSocket messages
     this.socket.onmessage = (event) => {
-      console.log('Message received from server:', event.data);
+      const receivedMessage: Message = JSON.parse(event.data); // Parse the received JSON
+      console.log('Message received from server:', receivedMessage);
+
+      // Add logic to notify components about the new message
+      this.onMessageReceived(receivedMessage);
     };
+  }
+
+  // Notify components about a new message received
+  onMessageReceived(message: Message): void {
+    // Emit the message to a Subject or directly update the message array in your component
   }
 
   /**

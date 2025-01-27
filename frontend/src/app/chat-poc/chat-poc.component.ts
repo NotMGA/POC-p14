@@ -24,12 +24,18 @@ export class ChatPocComponent implements OnInit, OnDestroy {
    * Subscribes to the chat service to retrieve all messages.
    */
   ngOnInit(): void {
+    // Listen for messages coming from WebSocket
+    this.chatService.onMessageReceived = (message: Message) => {
+      this.messages.push(message); // Add the new message to the list
+    };
+
+    // Fetch existing messages from the API
     this.chatService.getMessages().subscribe({
       next: (data) => {
-        this.messages = data; // Populate the messages array with data from the server
+        this.messages = data;
       },
       error: (err) => {
-        console.error('Error while fetching messages:', err); // Log any error that occurs during the API call
+        console.error('Error fetching messages:', err);
       },
     });
   }
@@ -53,21 +59,16 @@ export class ChatPocComponent implements OnInit, OnDestroy {
    */
   sendMessage(): void {
     if (!this.username) {
-      console.error('Username is not set.'); // Ensure the username is defined
+      console.error('Username is not set.');
       return;
     }
 
     if (this.input.trim()) {
-      // Add the new message to the local chat messages
-      this.messages.push({
-        id: 0, // Temporary ID for the new message (actual ID will be set by the backend)
-        sender: this.username, // Sender is the current username
-        content: this.input, // The message content
-        timestamp: new Date().toISOString(), // Add a timestamp
-      });
-      // Send the message to the backend using the chat service
+      // Send the message to the server through WebSocket
       this.chatService.sendMessage(this.input);
-      this.input = ''; // Reset the input field after sending the message
+
+      // Clear the input field after sending the message
+      this.input = '';
     }
   }
 
